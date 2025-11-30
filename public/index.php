@@ -32,11 +32,9 @@ use App\Middleware\AuthMiddleware;
  * Global error & exception handling
  */
 set_exception_handler(function (\Throwable $e): void {
-    // Kalau exception sudah mengirim response sendiri lewat ApiResponseBuilder,
-    // ini tidak akan dieksekusi lagi, tapi sebagai fallback global:
     ApiResponseBuilder::error(
         $e->getMessage(),
-        $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500
+        ($e->getCode() >= 400 && $e->getCode() <= 599) ? $e->getCode() : 500
     )->send();
 });
 
@@ -48,7 +46,7 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 // Preflight request (OPTIONS) langsung di-OK-kan
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
@@ -67,7 +65,7 @@ $instructorRepository = new InstructorRepository();
 $enrollmentRepository = new EnrollmentRepository();
 
 // Services
-$courseService     = new CourseService($courseRepository);
+$courseService     = new CourseService($courseRepository, $instructorRepository);
 $studentService    = new StudentService($studentRepository);
 $enrollmentService = new EnrollmentService(
     $enrollmentRepository,
@@ -87,11 +85,11 @@ $authMiddleware = new AuthMiddleware($authService);
 
 // =======================================================
 //  ROUTER SETUP
-//  Prefix /api akan ditangani di Router (basePath = "/api")
-//  Jadi di sini cukup tulis: "/courses", "/students", dst.
+//  Penting: prefix "/api" diberikan di sini
 // =======================================================
 
-$router = new Router();
+// 👇 INI PENTING: beri basePath "/api"
+$router = new Router('/api');
 
 /**
  * AUTH ROUTES (LOGIN, REFRESH, ME, LOGOUT)
@@ -108,7 +106,7 @@ $router->get('/auth/me', function () use ($authController, $authMiddleware): voi
     $authController->me($authMiddleware);
 });
 
-// POST /api/auth/logout (JWT stateless, cukup hapus token di client)
+// POST /api/auth/logout
 $router->post('/auth/logout', [$authController, 'logout']);
 
 /**
@@ -183,16 +181,3 @@ $router->get('/students/:id/enrollments', [$enrollmentController, 'studentEnroll
 // =======================================================
 
 $router->dispatch();
-
-/*
- * Jika pakai Apache, .htaccess kira-kira seperti ini:
- *
- * RewriteEngine On
- * RewriteCond %{REQUEST_FILENAME} !-f
- * RewriteCond %{REQUEST_FILENAME} !-d
- * RewriteRule ^api/(.*)$ public/index.php [QSA,L]
- *
- * Lalu akses endpoint seperti:
- *   GET http://localhost/elearning-api/api/courses
- *   POST http://localhost/elearning-api/api/auth/login
- */
