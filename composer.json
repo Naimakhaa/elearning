@@ -1,0 +1,13 @@
+{
+    "name": "elearning/api",
+    "description": "E-Learning REST API using PHP OOP, SOLID, Repository Pattern and Clean Architecture",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "require": {
+        "firebase/php-jwt": "^6.11"
+    }
+}

@@ -1,0 +1,296 @@
+openapi: 3.0.3
+info:
+  title: E-Learning REST API
+  version: 1.0.0
+  description: |
+    REST API untuk Sistem Manajemen Kursus Online.
+    Fitur:
+    - Manage Course
+    - Registrasi Student
+    - Enrollment Course
+    - Status Enrollment (active, completed, cancelled)
+    - OOP, SOLID, Design Pattern, Repository, Service Layer
+
+servers:
+  - url: http://localhost/ELEARNING_API/public/index.php/api
+    description: Local Development Server
+
+tags:
+  - name: Courses
+  - name: Students
+  - name: Enrollments
+
+paths:
+
+  # ------------------------------
+  # COURSE ENDPOINTS
+  # ------------------------------
+  /courses:
+    get:
+      tags: [Courses]
+      summary: Get all courses
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: category
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Courses retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+    post:
+      tags: [Courses]
+      summary: Create a new course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseInput"
+      responses:
+        "201":
+          description: Course created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+  /courses/{id}:
+    get:
+      tags: [Courses]
+      summary: Get a course by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Course found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "404":
+          description: Course not found
+
+    put:
+      tags: [Courses]
+      summary: Update course by ID
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseInput"
+      responses:
+        "200":
+          description: Updated
+        "404":
+          description: Not found
+
+    delete:
+      tags: [Courses]
+      summary: Delete course
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema: { type: integer }
+      responses:
+        "200": { description: Deleted }
+        "404": { description: Not found }
+
+  /courses/{id}/publish:
+    put:
+      tags: [Courses]
+      summary: Publish a course
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema: { type: integer }
+      responses:
+        "200": { description: Published }
+        "404": { description: Not found }
+
+  # ------------------------------
+  # STUDENT ENDPOINTS
+  # ------------------------------
+  /students:
+    get:
+      tags: [Students]
+      summary: Get all students
+      responses:
+        "200":
+          description: Students retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+    post:
+      tags: [Students]
+      summary: Register a new student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentInput"
+      responses:
+        "201": { description: Created }
+
+  /students/{id}:
+    get:
+      tags: [Students]
+      summary: Get student by ID
+      parameters:
+        - required: true
+          in: path
+          name: id
+          schema: { type: integer }
+      responses:
+        "200": { description: Student retrieved }
+        "404": { description: Not found }
+
+  /students/{id}/enrollments:
+    get:
+      tags: [Enrollments]
+      summary: Get all enrollments for a student
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema: { type: integer }
+      responses:
+        "200": { description: Enrollment list }
+
+  # ------------------------------
+  # ENROLLMENT ENDPOINTS
+  # ------------------------------
+  /enrollments:
+    post:
+      tags: [Enrollments]
+      summary: Enroll a student into a course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                student_id:
+                  type: integer
+                course_id:
+                  type: integer
+              required: [student_id, course_id]
+      responses:
+        "201": { description: Enrollment created }
+        "400": { description: Validation error }
+
+  /enrollments/{id}/complete:
+    put:
+      tags: [Enrollments]
+      summary: Mark enrollment as completed
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Completed }
+        "404": { description: Not found }
+
+  /enrollments/{id}/cancel:
+    put:
+      tags: [Enrollments]
+      summary: Cancel enrollment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: Cancelled }
+        "404": { description: Not found }
+
+# =============================
+# COMPONENT SCHEMAS
+# =============================
+components:
+  schemas:
+
+    # Standard API Response
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        status_code:
+          type: integer
+        message:
+          type: string
+        data:
+          nullable: true
+        errors:
+          nullable: true
+        meta:
+          nullable: true
+
+    Course:
+      type: object
+      properties:
+        id: { type: integer }
+        course_code: { type: string }
+        title: { type: string }
+        description: { type: string }
+        category: { type: string }
+        max_students: { type: integer }
+        current_enrolled: { type: integer }
+        status: { type: string }
+
+    CourseInput:
+      type: object
+      required:
+        - course_code
+        - title
+        - description
+        - category
+        - max_students
+      properties:
+        course_code: { type: string }
+        title: { type: string }
+        description: { type: string }
+        category: { type: string }
+        max_students: { type: integer }
+
+    StudentInput:
+      type: object
+      required: [email, password, name, phone]
+      properties:
+        email: { type: string }
+        password: { type: string }
+        name: { type: string }
+        phone: { type: string }
+        enroll_limit: { type: integer }
+
+    Enrollment:
+      type: object
+      properties:
+        id: { type: integer }
+        course_id: { type: integer }
+        student_id: { type: integer }
+        enrolled_at: { type: string, format: date-time }
+        completed_at: { type: string, format: date-time, nullable: true }
+        status: { type: string }
