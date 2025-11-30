@@ -1,55 +1,58 @@
 <?php
-// src/Core/Database.php
+
+declare(strict_types=1);
 
 namespace App\Core;
 
 use PDO;
 use PDOException;
 
-/**
- * Database Connection - Singleton Pattern
- * Memastikan hanya ada satu koneksi database
- */
 class Database
 {
-    private static ?Database $instance = null;
+    private static ?self $instance = null;
     private PDO $connection;
-    
-    // Enkapsulasi: Constructor private
+
     private function __construct()
     {
         $config = require __DIR__ . '/../../config/database.php';
-        
+
+        $host    = $config['host']     ?? '127.0.0.1';
+        $port    = $config['port']     ?? 3306;
+        $dbName  = $config['database'] ?? '';
+        $charset = $config['charset']  ?? 'utf8mb4';
+
+        $dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset={$charset}";
+
         try {
-            $dsn = "mysql:host={$config['host']};dbname={$config['database']};charset={$config['charset']}";
-            
             $this->connection = new PDO(
                 $dsn,
-                $config['username'],
-                $config['password'],
-                $config['options']
+                $config['username'] ?? 'root',
+                $config['password'] ?? '',
+                $config['options']  ?? []
             );
         } catch (PDOException $e) {
-            throw new \RuntimeException("Database connection failed: " . $e->getMessage());
+            throw new \RuntimeException(
+                'Database connection failed: ' . $e->getMessage()
+            );
         }
     }
-    
+
     private function __clone() {}
-    
+
     public function __wakeup()
     {
-        throw new \Exception("Cannot unserialize singleton");
+        throw new \Exception('Cannot unserialize singleton');
     }
-    
+
     public static function getInstance(): self
     {
         if (self::$instance === null) {
             self::$instance = new self();
         }
-        
+
         return self::$instance;
     }
-    
+
     public function getConnection(): PDO
     {
         return $this->connection;

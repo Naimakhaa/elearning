@@ -79,7 +79,7 @@ $authService = new AuthService($studentRepository, $instructorRepository);
 // Controllers
 $courseController     = new CourseController($courseService);
 $studentController    = new StudentController($studentService);
-$enrollmentController = new EnrollmentController($EnrollmentService);
+$enrollmentController = new EnrollmentController($enrollmentService);
 $authController       = new AuthController($authService);
 
 // Middleware

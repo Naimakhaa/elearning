@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'host'     => 'localhost',
+    'host'     => '127.0.0.1',
     'database' => 'elearning_api',   // harus SAMA dengan nama database di phpMyAdmin !!!
     'username' => 'root',
     'password' => '',   // Laragon/XAMPP biasanya kosong
