@@ -3,7 +3,7 @@
 -- ===========================
 
 CREATE DATABASE IF NOT EXISTS elearning_db;
-USE elearning_db;
+USE elearning_api;
 
 -- ===========================
 -- TABLE: instructors

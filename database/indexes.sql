@@ -2,7 +2,7 @@
 -- PERFORMANCE INDEXES
 -- ===========================
 
-USE elearning_db;
+USE elearning_api;
 
 -- Course search optimization
 CREATE INDEX idx_course_title ON courses (title);
