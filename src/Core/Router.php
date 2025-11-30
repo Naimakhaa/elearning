@@ -1,23 +1,18 @@
 <?php
-// src/Core/Router.php
 
 declare(strict_types=1);
 
 namespace App\Core;
 
-/**
- * Simple Router untuk REST API
- *
- * Contoh:
- *  $router->get('/courses', [$courseController, 'index']);
- *  $router->get('/courses/:id', [$courseController, 'show']);
- */
 class Router
 {
-    /**
-     * @var array<int,array{method:string,path:string,handler:callable}>
-     */
     private array $routes = [];
+    private string $basePath;
+
+    public function __construct(string $basePath = '')
+    {
+        $this->basePath = rtrim($basePath, '/');
+    }
 
     public function get(string $path, callable $handler): void
     {
@@ -42,7 +37,7 @@ class Router
     private function addRoute(string $method, string $path, callable $handler): void
     {
         $this->routes[] = [
-            'method'  => $method,
+            'method'  => strtoupper($method),
             'path'    => $path,
             'handler' => $handler,
         ];
@@ -53,14 +48,19 @@ class Router
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $uri    = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
-        // basePath: /api (diset di index.php lewat .htaccess atau manual)
-        $basePath = '/api';
+        // 1) Hapus prefix folder project (misal: /ELEARNING_API/public)
+        $scriptDir = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/');
+        if ($scriptDir !== '' && $scriptDir !== '/' && str_starts_with($uri, $scriptDir)) {
+            $uri = substr($uri, strlen($scriptDir));
+        }
 
-        if (str_starts_with($uri, $basePath)) {
-            $uri = substr($uri, strlen($basePath));
-            if ($uri === '') {
-                $uri = '/';
-            }
+        // 2) Hapus basePath (misal: /api)
+        if ($this->basePath !== '' && str_starts_with($uri, $this->basePath)) {
+            $uri = substr($uri, strlen($this->basePath));
+        }
+
+        if ($uri === '') {
+            $uri = '/';
         }
 
         foreach ($this->routes as $route) {
@@ -72,14 +72,12 @@ class Router
 
             if (preg_match($pattern, $uri, $matches)) {
                 array_shift($matches); // buang full match
-
-                // Panggil handler dengan parameter dari path
-                call_user_func_array($route['handler'], array_values($matches));
+                call_user_func_array($route['handler'], $matches);
                 return;
             }
         }
 
-        // 404 kalau tidak ada route yang cocok
+        // Endpoint tidak ditemukan
         http_response_code(404);
         header('Content-Type: application/json');
         echo json_encode([
@@ -89,15 +87,10 @@ class Router
         ], JSON_PRETTY_PRINT);
     }
 
-    /**
-     * Konversi path seperti "/courses/:id" menjadi regex
-     * Example: "/courses/:id" -> "#^/courses/([^/]+)$#"
-     */
     private function convertPathToRegex(string $path): string
     {
-        // ubah :param jadi grup regex
-        $pattern = preg_replace('/\/:([a-zA-Z0-9_]+)/', '/([^/]+)', $path);
-
+        // ubah /courses/:id jadi regex /courses/([^/]+)
+        $pattern = preg_replace('#/:([a-zA-Z0-9_]+)#', '/([^/]+)', $path);
         return '#^' . $pattern . '$#';
     }
 }

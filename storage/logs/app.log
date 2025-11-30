@@ -1,1 +1,4 @@
 [2025-11-30 13:48:33] INFO: SQL Query {"sql":"SELECT * FROM courses WHERE 1=1 ORDER BY created_at DESC","params":[]}
+[2025-11-30 13:50:05] INFO: SQL Query {"sql":"SELECT * FROM courses WHERE 1=1 ORDER BY created_at DESC","params":[]}
+[2025-11-30 13:50:49] INFO: SQL Query {"sql":"SELECT * FROM students ORDER BY created_at DESC","params":[]}
+[2025-11-30 13:51:27] INFO: SQL Query {"sql":"SELECT * FROM students WHERE id = ? LIMIT 1","params":[1]}
