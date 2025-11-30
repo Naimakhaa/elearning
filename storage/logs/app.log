@@ -1,0 +1,1 @@
+[2025-11-30 13:48:33] INFO: SQL Query {"sql":"SELECT * FROM courses WHERE 1=1 ORDER BY created_at DESC","params":[]}
