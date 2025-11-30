@@ -1,296 +1,621 @@
 openapi: 3.0.3
 info:
-  title: E-Learning REST API
+  title: E-Learning Management System API
+  description: REST API untuk sistem manajemen kursus online berbasis PHP OOP
   version: 1.0.0
-  description: |
-    REST API untuk Sistem Manajemen Kursus Online.
-    Fitur:
-    - Manage Course
-    - Registrasi Student
-    - Enrollment Course
-    - Status Enrollment (active, completed, cancelled)
-    - OOP, SOLID, Design Pattern, Repository, Service Layer
+  contact:
+    name: Team E-Learning
+    email: team@elearning.example.com
 
 servers:
-  - url: http://localhost/ELEARNING_API/public/index.php/api
-    description: Local Development Server
+  - url: http://localhost:8000/api
+    description: Development server
+  - url: https://api.elearning.example.com
+    description: Production server
 
 tags:
   - name: Courses
+    description: Operasi terkait manajemen kursus
   - name: Students
+    description: Operasi terkait manajemen siswa
   - name: Enrollments
+    description: Operasi terkait pendaftaran kursus
 
 paths:
-
-  # ------------------------------
-  # COURSE ENDPOINTS
-  # ------------------------------
+  # ==================== COURSES ENDPOINTS ====================
   /courses:
     get:
-      tags: [Courses]
-      summary: Get all courses
+      tags:
+        - Courses
+      summary: Mendapatkan daftar semua kursus
+      description: Mengambil daftar kursus dengan filter opsional
       parameters:
         - name: status
           in: query
-          schema: { type: string }
-        - name: category
+          description: Filter berdasarkan status kursus
+          schema:
+            type: string
+            enum: [draft, published]
+        - name: instructor_id
           in: query
-          schema: { type: string }
+          description: Filter berdasarkan ID instruktur
+          schema:
+            type: integer
       responses:
-        "200":
-          description: Courses retrieved
+        '200':
+          description: Sukses mengambil daftar kursus
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                status_code: 200
+                message: "Courses retrieved successfully"
+                data:
+                  - id: 1
+                    title: "PHP OOP Fundamentals"
+                    description: "Belajar pemrograman berorientasi objek dengan PHP"
+                    max_students: 30
+                    status: "published"
+                    instructor_id: 1
+                    created_at: "2024-01-15 10:00:00"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
     post:
-      tags: [Courses]
-      summary: Create a new course
+      tags:
+        - Courses
+      summary: Membuat kursus baru
+      description: Membuat kursus baru (hanya untuk instruktur)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CourseInput"
+              $ref: '#/components/schemas/CourseInput'
+            example:
+              title: "JavaScript Advanced"
+              description: "Pemrograman JavaScript tingkat lanjut"
+              max_students: 25
+              instructor_id: 1
       responses:
-        "201":
-          description: Course created
+        '201':
+          description: Kursus berhasil dibuat
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponse"
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                status_code: 201
+                message: "Course created successfully"
+                data:
+                  id: 2
+                  title: "JavaScript Advanced"
+                  description: "Pemrograman JavaScript tingkat lanjut"
+                  max_students: 25
+                  status: "draft"
+                  instructor_id: 1
+                  created_at: "2024-01-15 11:30:00"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /courses/{id}:
     get:
-      tags: [Courses]
-      summary: Get a course by ID
+      tags:
+        - Courses
+      summary: Mendapatkan detail kursus
+      description: Mengambil detail kursus berdasarkan ID
       parameters:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          description: ID kursus
+          schema:
+            type: integer
       responses:
-        "200":
-          description: Course found
+        '200':
+          description: Sukses mengambil detail kursus
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponse"
-        "404":
-          description: Course not found
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
 
     put:
-      tags: [Courses]
-      summary: Update course by ID
+      tags:
+        - Courses
+      summary: Memperbarui kursus
+      description: Memperbarui data kursus berdasarkan ID
       parameters:
         - name: id
-          required: true
           in: path
-          schema: { type: integer }
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CourseInput"
-      responses:
-        "200":
-          description: Updated
-        "404":
-          description: Not found
-
-    delete:
-      tags: [Courses]
-      summary: Delete course
-      parameters:
-        - name: id
           required: true
-          in: path
-          schema: { type: integer }
-      responses:
-        "200": { description: Deleted }
-        "404": { description: Not found }
-
-  /courses/{id}/publish:
-    put:
-      tags: [Courses]
-      summary: Publish a course
-      parameters:
-        - name: id
-          required: true
-          in: path
-          schema: { type: integer }
-      responses:
-        "200": { description: Published }
-        "404": { description: Not found }
-
-  # ------------------------------
-  # STUDENT ENDPOINTS
-  # ------------------------------
-  /students:
-    get:
-      tags: [Students]
-      summary: Get all students
-      responses:
-        "200":
-          description: Students retrieved
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiResponse"
-
-    post:
-      tags: [Students]
-      summary: Register a new student
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StudentInput"
+              $ref: '#/components/schemas/CourseInput'
       responses:
-        "201": { description: Created }
+        '200':
+          description: Kursus berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Courses
+      summary: Menghapus kursus
+      description: Menghapus kursus berdasarkan ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Kursus berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                status_code: 200
+                message: "Course deleted successfully"
+                data: null
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /courses/{id}/publish:
+    put:
+      tags:
+        - Courses
+      summary: Mempublikasikan kursus
+      description: Mengubah status kursus menjadi published
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Kursus berhasil dipublikasikan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                status_code: 200
+                message: "Course published successfully"
+                data:
+                  id: 1
+                  title: "PHP OOP Fundamentals"
+                  status: "published"
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          description: Validasi bisnis gagal
+          content:
+            application/json:
+              example:
+                success: false
+                status_code: 422
+                message: "Course cannot be published"
+                errors: ["Course requirements not met"]
+
+  # ==================== STUDENTS ENDPOINTS ====================
+  /students:
+    get:
+      tags:
+        - Students
+      summary: Mendapatkan daftar siswa
+      description: Mengambil daftar semua siswa terdaftar
+      responses:
+        '200':
+          description: Sukses mengambil daftar siswa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+    post:
+      tags:
+        - Students
+      summary: Mendaftarkan siswa baru
+      description: Membuat akun siswa baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentInput'
+            example:
+              name: "John Doe"
+              email: "john@example.com"
+              password: "secret123"
+              student_number: "STD2024001"
+      responses:
+        '201':
+          description: Siswa berhasil didaftarkan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
 
   /students/{id}:
     get:
-      tags: [Students]
-      summary: Get student by ID
-      parameters:
-        - required: true
-          in: path
-          name: id
-          schema: { type: integer }
-      responses:
-        "200": { description: Student retrieved }
-        "404": { description: Not found }
-
-  /students/{id}/enrollments:
-    get:
-      tags: [Enrollments]
-      summary: Get all enrollments for a student
+      tags:
+        - Students
+      summary: Mendapatkan detail siswa
+      description: Mengambil detail siswa berdasarkan ID
       parameters:
         - name: id
-          required: true
           in: path
-          schema: { type: integer }
+          required: true
+          schema:
+            type: integer
       responses:
-        "200": { description: Enrollment list }
+        '200':
+          description: Sukses mengambil detail siswa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
 
-  # ------------------------------
-  # ENROLLMENT ENDPOINTS
-  # ------------------------------
+  # ==================== ENROLLMENTS ENDPOINTS ====================
   /enrollments:
     post:
-      tags: [Enrollments]
-      summary: Enroll a student into a course
+      tags:
+        - Enrollments
+      summary: Mendaftarkan siswa ke kursus
+      description: Melakukan enrollment siswa ke kursus dengan validasi bisnis
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - student_id
+                - course_id
               properties:
                 student_id:
                   type: integer
+                  example: 1
                 course_id:
                   type: integer
-              required: [student_id, course_id]
+                  example: 1
       responses:
-        "201": { description: Enrollment created }
-        "400": { description: Validation error }
+        '201':
+          description: Enrollment berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                status_code: 201
+                message: "Enrollment created successfully"
+                data:
+                  id: 1
+                  student_id: 1
+                  course_id: 1
+                  status: "active"
+                  enrolled_at: "2024-01-15 12:00:00"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '422':
+          description: Validasi bisnis gagal
+          content:
+            application/json:
+              examples:
+                CourseFull:
+                  value:
+                    success: false
+                    status_code: 422
+                    message: "Enrollment failed"
+                    errors: ["Course is full"]
+                DuplicateEnrollment:
+                  value:
+                    success: false
+                    status_code: 422
+                    message: "Enrollment failed"
+                    errors: ["Student already enrolled in this course"]
+                CourseNotPublished:
+                  value:
+                    success: false
+                    status_code: 422
+                    message: "Enrollment failed"
+                    errors: ["Course is not published"]
+
+  /students/{id}/enrollments:
+    get:
+      tags:
+        - Enrollments
+      summary: Mendapatkan daftar enrollment siswa
+      description: Mengambil semua kursus yang diikuti oleh siswa tertentu
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Sukses mengambil daftar enrollment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
 
   /enrollments/{id}/complete:
     put:
-      tags: [Enrollments]
-      summary: Mark enrollment as completed
+      tags:
+        - Enrollments
+      summary: Menandai enrollment sebagai selesai
+      description: Mengubah status enrollment menjadi completed
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
-          schema: { type: integer }
+          schema:
+            type: integer
       responses:
-        "200": { description: Completed }
-        "404": { description: Not found }
+        '200':
+          description: Enrollment berhasil diselesaikan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                status_code: 200
+                message: "Enrollment completed successfully"
+                data:
+                  id: 1
+                  status: "completed"
+        '404':
+          $ref: '#/components/responses/NotFoundError'
 
   /enrollments/{id}/cancel:
     put:
-      tags: [Enrollments]
-      summary: Cancel enrollment
+      tags:
+        - Enrollments
+      summary: Membatalkan enrollment
+      description: Mengubah status enrollment menjadi cancelled
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
-          schema: { type: integer }
+          schema:
+            type: integer
       responses:
-        "200": { description: Cancelled }
-        "404": { description: Not found }
+        '200':
+          description: Enrollment berhasil dibatalkan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                success: true
+                status_code: 200
+                message: "Enrollment cancelled successfully"
+                data:
+                  id: 1
+                  status: "cancelled"
+        '404':
+          $ref: '#/components/responses/NotFoundError'
 
-# =============================
-# COMPONENT SCHEMAS
-# =============================
 components:
   schemas:
-
-    # Standard API Response
+    # ==================== CORE RESPONSE SCHEMA ====================
     ApiResponse:
       type: object
       properties:
         success:
           type: boolean
+          description: Status keberhasilan request
         status_code:
           type: integer
+          description: HTTP status code
         message:
           type: string
+          description: Pesan response
         data:
+          type: object
           nullable: true
+          description: Data response (jika ada)
         errors:
+          type: array
           nullable: true
-        meta:
-          nullable: true
+          items:
+            type: string
+          description: Daftar error (jika ada)
 
+    # ==================== COURSE SCHEMAS ====================
     Course:
       type: object
       properties:
-        id: { type: integer }
-        course_code: { type: string }
-        title: { type: string }
-        description: { type: string }
-        category: { type: string }
-        max_students: { type: integer }
-        current_enrolled: { type: integer }
-        status: { type: string }
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        max_students:
+          type: integer
+          minimum: 1
+          maximum: 100
+        status:
+          type: string
+          enum: [draft, published]
+        instructor_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
 
     CourseInput:
       type: object
       required:
-        - course_code
         - title
-        - description
-        - category
-        - max_students
+        - instructor_id
       properties:
-        course_code: { type: string }
-        title: { type: string }
-        description: { type: string }
-        category: { type: string }
-        max_students: { type: integer }
+        title:
+          type: string
+          maxLength: 255
+          example: "Advanced PHP Programming"
+        description:
+          type: string
+          nullable: true
+          example: "Belajar pemrograman PHP tingkat lanjut"
+        max_students:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 30
+          example: 25
+        instructor_id:
+          type: integer
+          example: 1
+
+    # ==================== STUDENT SCHEMAS ====================
+    Student:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+        student_number:
+          type: string
+          maxLength: 20
+        created_at:
+          type: string
+          format: date-time
 
     StudentInput:
       type: object
-      required: [email, password, name, phone]
+      required:
+        - name
+        - email
+        - password
+        - student_number
       properties:
-        email: { type: string }
-        password: { type: string }
-        name: { type: string }
-        phone: { type: string }
-        enroll_limit: { type: integer }
+        name:
+          type: string
+          maxLength: 255
+          example: "Jane Smith"
+        email:
+          type: string
+          format: email
+          example: "jane@example.com"
+        password:
+          type: string
+          minLength: 6
+          example: "secret123"
+        student_number:
+          type: string
+          maxLength: 20
+          example: "STD2024002"
 
+    # ==================== ENROLLMENT SCHEMAS ====================
     Enrollment:
       type: object
       properties:
-        id: { type: integer }
-        course_id: { type: integer }
-        student_id: { type: integer }
-        enrolled_at: { type: string, format: date-time }
-        completed_at: { type: string, format: date-time, nullable: true }
-        status: { type: string }
+        id:
+          type: integer
+        student_id:
+          type: integer
+        course_id:
+          type: integer
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        enrolled_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+
+  # ==================== STANDARD RESPONSES ====================
+  responses:
+    ValidationError:
+      description: Validasi input gagal
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            status_code: 400
+            message: "Validation failed"
+            errors:
+              - "Title is required"
+              - "Max students must be at least 1"
+
+    NotFoundError:
+      description: Resource tidak ditemukan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            status_code: 404
+            message: "Resource not found"
+            data: null
+            errors: ["Course with ID 999 not found"]
+
+    InternalServerError:
+      description: Terjadi kesalahan server internal
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            status_code: 500
+            message: "Internal server error"
+            data: null
+            errors: ["Database connection failed"]
